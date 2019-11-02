@@ -223,12 +223,13 @@ int_handler:
 		loop2:
 			beqz a2, end3
 			li t1, UART_VS
-			lb t2, 0(a1)
+			lbu t2, 0(a1)
 			sb t2, 0(t1)
+			li t1, UART_S
 			li t2, 1
 			sb t2, 0(t1)
 			lloop:
-				lb t2, 0(t1)
+				lbu t2, 0(t1)
 				bnez t2, lloop
 			addi a1, a1, 1 
 			addi t0, t0, 1
@@ -316,5 +317,5 @@ _start:
 	csrw mepc, t0
 	mret
 
-tempo: .skip 4
+tempo: .word 0
 pilha_s: .skip 1000

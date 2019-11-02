@@ -1,0 +1,84 @@
+.globl puts
+.globl set_time
+.globl get_time
+.globl get_current_GPS_position
+.globl get_us_distance
+.globl get_gyro_angles
+.globl set_head_servo
+.globl set_engine_torque
+.globl set_torque
+
+set_time:
+	li a7, 22
+	ecall
+	ret	
+
+puts:
+	mv a1, a0
+	li a0, 0
+	li a2, 10
+	li a7, 64
+	ecall	
+	ret
+
+get_time:
+	li a7, 21
+	ecall
+	ret
+
+get_current_GPS_position:
+	li a7, 19
+	ecall
+	ret
+
+get_gyro_angles:
+	li a7, 20
+	ecall
+	ret
+
+get_us_distance:
+	li a7, 16
+	ecall
+	ret
+
+set_head_servo:
+	li a7, 17
+	ecall
+	ret
+
+set_engine_torque:
+	li t0, 100
+	bgt a0, t0, not_good
+	li t0, -100
+	blt a0, t0, not_good
+	li a7, 18
+	ecall
+	beqz a0, endis
+	li a0, -2
+	j endis
+	not_good:
+		li a0, -1
+	endis:
+		ret
+
+set_torque:
+	li t0, 100
+	bgt a0, t0, bad_bad
+	bgt a1, t0, bad_bad
+	li t0, -100
+	blt a0, t0, bad_bad
+	blt a1, t0, bad_bad
+	mv a2, a1
+	mv a1, a0
+	li a0, 0
+	li a7, 18
+	ecall
+	mv a1, a2
+	li a0, 1
+	ecall
+	j endson
+
+	bad_bad:
+		li a0, -1
+	endson:
+		ret		
