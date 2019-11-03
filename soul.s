@@ -42,26 +42,25 @@ int_handler:
 	csrw mie, t1
 	
 	# ----------------- Identifica Interrupcao -------------------- #
-	csrr t0, mstatus
-	li t1, 0x80000007	
-	beq t0, t1, timer
+	csrr t0, mcause
+	bltz t0, timer
 	li t1, 16
 	beq a7, t1, read_us
 	li t1, 17
 	beq a7, t1, set_servo
 	li t1, 18
-	beq a7, t1, set_torque	
+	beq a7, t1, settorque	
 	li t1, 19
 	beq a7, t1, gps
 	li t1, 20
 	beq a7, t1, read_gyro
 	li t1, 21
-	beq a7, t1, get_time
+	beq a7, t1, gettime
 	li t1, 22
-	beq a7, t1, set_time
+	beq a7, t1, settime
 	li t1, 64
 	beq a7, t1, write
-
+	j return
 	# ---------------- Tratamento da Interrupcao ------------------ #
 	
 	# Trata interrupcao do GPT a cada milisegundo atualizando o tempo do sistema
@@ -70,11 +69,12 @@ int_handler:
 		lw t1, 0(t0)
 		addi t1, t1, 1
 		sw t1, 0(t0)
+		li t0, GPT_I
+		sb zero, 0(t0) 
 		li t1, 1
 		li t0, GPT
 		sw t1, 0(t0)
-		li t0, GPT_I
-		sb zero, 0(t0) 
+		
 		j return
 
 	# Retorna a posicao x, y, z do robo no endereco fornecido em a0
@@ -85,13 +85,13 @@ int_handler:
 			lw t1, 0(t0)
 			beqz t1, loop
 		li t0, POS_X
-		lhu t0, 0(t0)
+		lw t0, 0(t0)
 		sw t0, 0(a0)  	
 		li t0, POS_Y
-		lhu t0, 0(t0)
+		lw t0, 0(t0)
 		sw t0, 4(a0)  	
 		li t0, POS_Z
-		lhu t0, 0(t0)
+		lw t0, 0(t0)
 		sw t0, 8(a0)
 		  	
 		j return_plus
@@ -137,7 +137,7 @@ int_handler:
 			j return_plus
 
 	# Define o torque de um dos motores (a0) com o valor em a1
-	set_torque:
+	settorque:
 		beq zero, a0, m_zero
 		li t0, 1
 		beq t0, a0, m_um
@@ -200,13 +200,13 @@ int_handler:
 		j return_plus
 
 	# Retorna o tempo do sistema
-	get_time:
+	gettime:
 		la a0, tempo
 		lw a0, 0(a0)
 		j return_plus
 
 	# Define o tempo do sistema
-	set_time:
+	settime:
 		la t1, tempo
 		sw a0, 0(t1)
 		j return_plus
@@ -219,6 +219,7 @@ int_handler:
 		addi a0, a0, 12
 		csrrw a0, mscratch, a0
 		
+		# Loop para escrever cada letra da string	
 		li t0, 0
 		loop2:
 			beqz a2, end3
@@ -228,6 +229,7 @@ int_handler:
 			li t1, UART_S
 			li t2, 1
 			sb t2, 0(t1)
+			# Loop esperando que se possa escrever outra letra
 			lloop:
 				lbu t2, 0(t1)
 				bnez t2, lloop
@@ -257,6 +259,7 @@ int_handler:
 		lw t1, 4(a0)
 		addi a0, a0, -8
 		csrrw a0, mscratch, a0
+		
 		mret
 
 _start:	
@@ -280,9 +283,11 @@ _start:
 	sw zero, 0(t0)	
 
 	# Configura GPT para gerar interrupcoes a cada 1ms
-	li t0, GPT
-	li t1, 1
-	sw t1, 0(t0)
+	#li t0, GPT
+	#li t1, 1
+	#sw t1, 0(t0)
+	#li t0, GPT_I
+	#sb zero, 0(t0)
 	
 	# -------------------- Tranferencia de Execucao para Aplicacao de Controle ------------------------------ #
 	
@@ -316,6 +321,9 @@ _start:
 	la t0, main
 	csrw mepc, t0
 	mret
+l_i:
+	j l_i
+
 
 tempo: .word 0
 pilha_s: .skip 1000

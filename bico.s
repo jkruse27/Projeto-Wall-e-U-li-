@@ -14,9 +14,18 @@ set_time:
 	ret	
 
 puts:
+	# Encontra o tamanho da string
+	mv t1, a0
+	looplei:
+		lbu t0, 0(t1)
+		beqz t0, cont
+		addi t1, t1, 1
+		j looplei
+	# Realiza a chamada de sistema
+	cont: 
 	mv a1, a0
 	li a0, 0
-	li a2, 10
+	sub a2, t1, a0
 	li a7, 64
 	ecall	
 	ret
@@ -47,10 +56,12 @@ set_head_servo:
 	ret
 
 set_engine_torque:
+	# Verifica se o torque fornecido esta dentro dos valores permitidos
 	li t0, 100
 	bgt a0, t0, not_good
 	li t0, -100
 	blt a0, t0, not_good
+	# Realiza a chamada de sistema
 	li a7, 18
 	ecall
 	beqz a0, endis
@@ -62,12 +73,14 @@ set_engine_torque:
 		ret
 
 set_torque:
+	# Verifica se os torques fornecidos esta dentro dos valores permitidos
 	li t0, 100
 	bgt a0, t0, bad_bad
 	bgt a1, t0, bad_bad
 	li t0, -100
 	blt a0, t0, bad_bad
 	blt a1, t0, bad_bad
+	# Realiza a chamada de sistema
 	mv a2, a1
 	mv a1, a0
 	li a0, 0
