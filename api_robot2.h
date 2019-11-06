@@ -1,4 +1,4 @@
-/**************************************************************** 
+/****************************************************************
  * Description: Uoli Control Application Programming Interface.
  *
  * Authors: Edson Borin (edson@ic.unicamp.br)
@@ -10,9 +10,9 @@
 #define API_ROBOT_H
 
 /*
- * Struct to represent 3-dimensional vectors. 
+ * Struct to represent 3-dimensional vectors.
  */
-typedef struct 
+typedef struct
 {
   int x;
   int y;
@@ -44,9 +44,9 @@ Vector3 dangerous_locations[5] = {
 /* Engines                                                    */
 /**************************************************************/
 
-/* 
+/*
  * Sets both engines torque. The torque value must be between -100 and 100.
- * Parameter: 
+ * Parameter:
  *   engine_1: Engine 1 torque
  *   engine_2: Engine 2 torque
  * Returns:
@@ -55,10 +55,10 @@ Vector3 dangerous_locations[5] = {
  */
 int set_torque(int engine_1, int engine_2);
 
-/* 
+/*
  * Sets engine torque. Engine ID 0/1 identifies the left/right engine.
  * The torque value must be between -100 and 100.
- * Parameter: 
+ * Parameter:
  *   engine_id: Engine ID
  *   torque: Engine torque
  * Returns:
@@ -68,12 +68,12 @@ int set_torque(int engine_1, int engine_2);
  */
 int set_engine_torque(int engine_id, int torque);
 
-/* 
- * Sets the angle of three Servo motors that control the robot head. 
+/*
+ * Sets the angle of three Servo motors that control the robot head.
  *   Servo ID 0/1/2 identifies the Base/Mid/Top servos.
- * Parameter: 
- *   servo_id: Servo ID 
- *   angle: Servo Angle 
+ * Parameter:
+ *   servo_id: Servo ID
+ *   angle: Servo Angle
  * Returns:
  *   -1 in case the servo id is invalid
  *   -2 in case the servo angle is invalid
@@ -85,27 +85,27 @@ int set_head_servo(int servo_id, int angle);
 /* Sensors                                                    */
 /**************************************************************/
 
-/* 
+/*
  * Reads distance from ultrasonic sensor.
- * Parameter: 
+ * Parameter:
  *   none
  * Returns:
  *   distance of nearest object within the detection range, in centimeters.
  */
 unsigned short get_us_distance();
 
-/* 
+/*
  * Reads current global position using the GPS device.
- * Parameter: 
+ * Parameter:
  *   pos: pointer to structure to be filled with the GPS coordinates.
  * Returns:
  *   void
  */
 void get_current_GPS_position(Vector3* pos);
 
-/* 
+/*
  * Reads global rotation from the gyroscope device .
- * Parameter: 
+ * Parameter:
  *   pos: pointer to structure to be filled with the Euler angles indicated by the gyroscope.
  * Returns:
  *   void
@@ -116,8 +116,8 @@ void get_gyro_angles(Vector3* angles);
 /* Timer                                                      */
 /**************************************************************/
 
-/* 
- * Reads the system time. 
+/*
+ * Reads the system time.
  * Parameter:
  *   * t: pointer to a variable that will receive the system time.
  * Returns:
@@ -125,9 +125,9 @@ void get_gyro_angles(Vector3* angles);
  */
 unsigned int get_time();
 
-/* 
+/*
  * Sets the system time.
- * Parameter: 
+ * Parameter:
  *   t: the new system time.
  * Returns:
  *   void
@@ -138,18 +138,14 @@ void set_time(unsigned int t);
 /* UART                                                       */
 /**************************************************************/
 
-/* 
- * Writes a string to the UART. Uses the syscall write with file 
+/*
+ * Writes a string to the UART. Uses the syscall write with file
  * descriptor 1 to instruct the SOUL to write the string to the UART.
  * Parameter:
  *   * s: pointer to the string.
  * Returns:
  *   void
  */
-void puts(const char*);
+ // void puts(const char*);
 
 #endif // API_ROBOT_H
-
-
-
-
