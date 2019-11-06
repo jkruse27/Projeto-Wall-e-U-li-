@@ -76,7 +76,7 @@ int_handler:
 		sw t1, 0(t0)
 		li t0, GPT_I
 		sb zero, 0(t0) 
-		li t1, 1
+		li t1, 100
 		li t0, GPT
 		sw t1, 0(t0)
 		
