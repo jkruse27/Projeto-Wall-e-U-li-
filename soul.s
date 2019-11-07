@@ -35,12 +35,12 @@ int_handler:
 	csrr t1, mstatus
 	ori t1, t1, 0x80
 	csrw mstatus, t1
-	
+
 	csrr t1, mie
 	li t0, 0x800
 	or t1, t1, t0
 	csrw mie, t1
-	
+
 	# ----------------- Identifica Interrupcao -------------------- #
 	csrr t0, mcause
 	bltz t0, timer
@@ -49,7 +49,7 @@ int_handler:
 	li t1, 17
 	beq a7, t1, set_servo
 	li t1, 18
-	beq a7, t1, settorque	
+	beq a7, t1, settorque
 	li t1, 19
 	beq a7, t1, gps
 	li t1, 20
@@ -64,7 +64,7 @@ int_handler:
 	beq a7, t1, print_num
 	j return
 	# ---------------- Tratamento da Interrupcao ------------------ #
-	
+
 	# Trata interrupcao do GPT a cada milisegundo atualizando o tempo do sistema
 	timer:
 		li t0, GPT_I
@@ -75,11 +75,11 @@ int_handler:
 		addi t1, t1, 100
 		sw t1, 0(t0)
 		li t0, GPT_I
-		sb zero, 0(t0) 
+		sb zero, 0(t0)
 		li t1, 100
 		li t0, GPT
 		sw t1, 0(t0)
-		
+
 		j return
 
 	# Retorna a posicao x, y, z do robo no endereco fornecido em a0
@@ -91,16 +91,16 @@ int_handler:
 			beqz t1, loop
 		li t0, POS_X
 		lw t0, 0(t0)
-		sw t0, 0(a0)  	
+		sw t0, 0(a0)
 		li t0, POS_Y
 		lw t0, 0(t0)
-		sw t0, 4(a0)  	
+		sw t0, 4(a0)
 		li t0, POS_Z
 		lw t0, 0(t0)
 		sw t0, 8(a0)
-		  	
+
 		j return_plus
-	
+
 	# Define o angulo de um dos servos edterminados do robo
 	set_servo:
 		beq a0, zero, s_zero
@@ -119,7 +119,7 @@ int_handler:
 			li t0, SERVO_1
 			sb a1, 0(t0)
 			j end
-		s_um:	
+		s_um:
 			li t0, 52
 			blt a1, t0, bad_end
 			li t0, 90
@@ -135,10 +135,10 @@ int_handler:
 			li t0, SERVO_3
 			sb a1, 0(t0)
 			j end
-		
+
 		bad_end:
 			li a0, -1
-		end: 
+		end:
 			j return_plus
 
 	# Define o torque de um dos motores (a0) com o valor em a1
@@ -148,7 +148,7 @@ int_handler:
 		beq t0, a0, m_um
 		li a0, -1
 		j end1
-			
+
 		m_um:
 			li t0, TORQUE_2
 			sh a1, 0(t0)
@@ -160,9 +160,9 @@ int_handler:
 			sh a1, 0(t0)
 			li a0, 0
 
-		end1:	
+		end1:
 			j return_plus
-	
+
 	# Retorna a leitura do sensor ultassom ou -1 caso nao haja nada no campo de visao (ou a menos de 600cm)
 	read_us:
 		li t1, READ_US
@@ -179,7 +179,7 @@ int_handler:
 		li a0, -1
 		j endi
 		good:
-			mv a0, t1 	
+			mv a0, t1
 		endi:
 			j return_plus
 
@@ -192,15 +192,23 @@ int_handler:
 			beqz t1, loop1
 		li t0, ANGLE
 		lw t0, 0(t0)
-		li t1, X_MASK
-		and t1, t0, t1
+		# li t1, X_MASK
+		# and t1, t0, t1
+		# srli t1, t1, 20
+		slli t1, t0, 2
+		srli t1, t1, 22
 		sw t1, 0(a0)
-		li t1, Y_MASK  	
-		and t1, t0, t1
-		sw t0, 4(a0)  
-		li t1, Z_MASK	
-		and t1, t0, t1
-		sw t0, 8(a0)
+		# li t1, Y_MASK
+		# and t1, t0, t1
+		# srli t1, t1, 10
+		slli t1, t0, 12
+		srli t1, t1, 22
+		sw t1, 4(a0)
+		# li t1, Z_MASK
+		# and t1, t0, t1
+		slli t1, t0, 22
+		srli t1, t1, 22
+		sw t1, 8(a0)
 
 		j return_plus
 
@@ -215,8 +223,8 @@ int_handler:
 		la t1, tempo
 		sw a0, 0(t1)
 		j return_plus
-	
-	print_num:	
+
+	print_num:
 		li t0, 10
 		mv t2, a2
 		div a2, a2, t0
@@ -234,7 +242,7 @@ int_handler:
 		lloop1:
 			lbu t2, 0(t1)
 			bnez t2, lloop1
-		
+
 		mv t2, a2
 		div a2, a2, t0
 		div a2, a2, t0
@@ -250,7 +258,7 @@ int_handler:
 		lloop2:
 			lbu t2, 0(t1)
 			bnez t2, lloop2
-		
+
 		mv t2, a2
 		div a2, a2, t0
 		rem t1, a2, t0
@@ -266,7 +274,7 @@ int_handler:
 			lbu t2, 0(t1)
 			bnez t2, lloop3
 
-		mv t2, a2	
+		mv t2, a2
 		rem t1, a2, t0
 		mv a2, t2
 		addi t1, t1, 48
@@ -303,8 +311,8 @@ int_handler:
 		sw a2, 8(a0)
 		addi a0, a0, 12
 		csrrw a0, mscratch, a0
-		
-		# Loop para escrever cada letra da string	
+
+		# Loop para escrever cada letra da string
 		li t0, 0
 		loop2:
 			beqz a2, end3
@@ -318,7 +326,7 @@ int_handler:
 			lloop:
 				lbu t2, 0(t1)
 				bnez t2, lloop
-			addi a1, a1, 1 
+			addi a1, a1, 1
 			addi t0, t0, 1
 			addi a2, a2, -1
 			j loop2
@@ -344,28 +352,28 @@ int_handler:
 		lw t1, 4(a0)
 		addi a0, a0, -8
 		csrrw a0, mscratch, a0
-		
+
 		mret
 
-_start:	
+_start:
 	# -------------------------- Configuracoes do Ambiente e Interrupcoes ----------------------------------- #
-	
+
 	# -------------------------------- Configuracoes do Hardware -------------------------------------------- #
-	
+
 	# Configura as configuracoes da cabeca para posicao natural (Base = 31, Mid = 80, Top = 78)
 	li t0, SERVO_3
 	li t1, 78
-	sb t1, (t0)	
+	sb t1, (t0)
 	li t0, SERVO_2
 	li t1, 80
-	sb t1, (t0)	
+	sb t1, (t0)
 	li t0, SERVO_1
 	li t1, 31
-	sb t1, (t0)	
-	
+	sb t1, (t0)
+
 	# Configura torque dos 2 motores para 0
 	li t0, TORQUE_2
-	sw zero, 0(t0)	
+	sw zero, 0(t0)
 
 	# Configura GPT para gerar interrupcoes a cada 1ms
 	li t0, GPT
@@ -373,17 +381,17 @@ _start:
 	sw t1, 0(t0)
 	li t0, GPT_I
 	sb zero, 0(t0)
-	
+
 	# -------------------- Tranferencia de Execucao para Aplicacao de Controle ------------------------------ #
-	
+
 	# Salva o endereco do tratador de interrupcoes/excessoes
 	la t0, int_handler
 	csrw mtvec, t0
-	
+
 	# Salva o ponteiro da pilha do sistema em mscratch
 	la a0, pilha_s
 	csrrw a0, mscratch, a0
-	
+
 	# Cria a pilha do programa no final da memoria (128000000)
 	li sp, 0x7A12000
 
@@ -391,7 +399,7 @@ _start:
 	csrr t1, mstatus
 	ori t1, t1, 0x80
 	csrw mstatus, t1
-	
+
 	csrr t1, mie
 	li t0, 0x800
 	or t1, t1, t0
@@ -402,7 +410,7 @@ _start:
 	li t0, ~0x1800
 	and t1, t1, t0
 	csrw mstatus, t1
-	
+
 	la t0, main
 	csrw mepc, t0
 	mret
