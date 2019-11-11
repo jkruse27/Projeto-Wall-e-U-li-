@@ -1,4 +1,18 @@
 #include "api_robot2.h"
+//#define MINDIFF 2.2250738585072014e-308   // smallest positive double
+#define MINDIFF 2.25e-308                   // use for convergence check
+
+double raiz_quadrada(double square)
+{
+    double root=square/3, last, diff=1;
+    if (square <= 0) return 0;
+    do {
+        last = root;
+        root = (root + square / root) / 2;
+        diff = root - last;
+    } while (diff > MINDIFF || diff < -MINDIFF);
+    return root;
+}
 void vira(int grau){
 	Vector3 *atual;
 	Vector3 *guarda;
@@ -56,24 +70,26 @@ void alinha(int x, int z){
 	get_current_GPS_position(posAtual);
 	Vector3 *m;
 	get_gyro_angles(m);
-	float qwert;
 	int vetX = (x - posAtual->x);
 	int vetZ = (z - posAtual->z);
-	int moduloDest = ((x*2)+(z*2))*(1/2);
-	int moduloAtual = ((posAtual->x*2)+(posAtual->z*2))*(1/2);
-	int escalar = (x*posAtual->x)+(z*posAtual->x);
-	float cosseno = escalar/(moduloDest * moduloAtual);
-	while(cosseno > 0.99 || cosseno < (-0.99)){
+	double moduloDest = raiz_quadrada((x*x)+(z*z));
+	double moduloAtual = raiz_quadrada((posAtual->x*posAtual->x)+(posAtual->z*posAtual->z));
+	double escalar = (x*posAtual->x)+(z*posAtual->x);
+	double cosseno = escalar/(moduloDest * moduloAtual);
+	float printa;
+	// while(cosseno > 0.99 || cosseno < (-0.99)){
+	while(cosseno != 1){
+		printa = cosseno*100;
+		if(printa < 0){
+			printa = -printa;
+		}
+		print_num(printa);
 		set_torque(20, -20);
 		get_current_GPS_position(posAtual);
-		moduloDest = ((x*2)+(z*2))*(1/2);
-		moduloAtual = ((posAtual->x*2)+(posAtual->z*2))*(1/2);
+		moduloDest = raiz_quadrada((x*x)+(z*z));
+		moduloAtual = raiz_quadrada((posAtual->x*posAtual->x)+(posAtual->z*posAtual->z));
 		escalar = (x*posAtual->x)+(z*posAtual->x);
 		cosseno = escalar/(moduloDest * moduloAtual);
-		qwert = cosseno;
-		if(cosseno < 0)
-			qwert = -cosseno;
-		print_num(cosseno);
 	}
 	return;
 
@@ -110,9 +126,9 @@ int main(){
 	// proximoDest = maisPerto(tamanho, visitados, num_visitados);
 	// print_num(proximoDest);
 	int i = 0;
-	print_num(friends_locations[i].x);
-	print_num(friends_locations[i].y);
-	print_num(-friends_locations[i].z);
+	// print_num(friends_locations[i].x);
+	// print_num(friends_locations[i].y);
+	// print_num(-friends_locations[i].z);
 	alinha(friends_locations[i].x, friends_locations[i].z);
 	// for(int i=0; i<tamanho; i++){
 	// 	proximoDest = maisPerto(tamanho, visitados, num_visitados);
