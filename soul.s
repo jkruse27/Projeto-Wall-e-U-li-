@@ -188,6 +188,8 @@ int_handler:
 		li t0, READ_POS
 		sw zero, 0(t0)
 		loop1:
+			# li a0, 49
+			# jal print_num
 			lw t1, 0(t0)
 			beqz t1, loop1
 		li t0, ANGLE

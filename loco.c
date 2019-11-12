@@ -28,26 +28,59 @@ int arccosseno100(double cosseno){
     return arccos;
 }
 
+int amigoProx(){
+    int tamanho = sizeof(friends_locations) / sizeof(friends_locations[0]);
+    Vector3 *posAtual;
+    int vetX, vetZ, dist;
+    for (int i = 0; i < tamanho; i++){
+        get_current_GPS_position(posAtual);
+        vetX = (friends_locations[i].x - posAtual->x);
+        vetZ = (friends_locations[i].z - posAtual->z);
+        dist = raiz_quadrada((vetX*vetX) + (vetZ*vetZ));
+        if(dist <= 5){
+            return 1;
+        }
+    }
+    return 0;
+}
 
+int inimigoProx(){
+    int tamanho = sizeof(dangerous_locations) / sizeof(dangerous_locations[0]);
+    Vector3 *posAtual;
+    int vetX, vetZ, dist;
+    for (int i = 0; i < tamanho; i++){
+        get_current_GPS_position(posAtual);
+        vetX = (dangerous_locations[i].x - posAtual->x);
+        vetZ = (dangerous_locations[i].z - posAtual->z);
+        dist = raiz_quadrada((vetX*vetX) + (vetZ*vetZ));
+        if(dist <= 12){
+            return 1;
+        }
+    }
+    return 0;
+}
 void vira(int grau){
 	Vector3 *atual;
 	Vector3 *guarda;
+    print_num(10);
 	get_gyro_angles(guarda);
-	get_gyro_angles(atual);
+    print_num(10);
 	float dest = (guarda->y+grau)%360;
 	if(dest<0){
 		dest = 360 - dest;
 	}
-    print_num(dest);
+    get_gyro_angles(atual);
 	if(atual->y < dest){
 		while(atual->y < dest){
 				set_torque(15, -15);
+                // print_num(2);
 				get_gyro_angles(atual);
 				// print_num(atual->y);
 			}
 	}else{
 		while(atual->y > dest){
 				set_torque(-15, 15);
+                // print_num(3);
 				get_gyro_angles(atual);
 				// print_num(atual->y);
 			}
@@ -61,13 +94,13 @@ void viraPara(int grau){
 	get_gyro_angles(atual);
 	if(atual->y < grau){
 		while(atual->y < grau){
-				set_torque(20, -20);
+				set_torque(15, -15);
 				get_gyro_angles(atual);
 				// print_num(atual->y);
 			}
 	}else{
 		while(atual->y > grau){
-				set_torque(-20, 20);
+				set_torque(-15, 15);
 				get_gyro_angles(atual);
 				// print_num(atual->y);
 			}
@@ -114,23 +147,45 @@ void alinha(int x, int z){
     double modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
     double cosseno = (vetX/(modulo));
     int angulo;
+
     if(cosseno < 0){
         angulo = 180 - arccosseno100(cosseno);
     }else{
         angulo = arccosseno100(cosseno);
     }
     //vetor unitario que pra a qual o robo esdta virado eh o vetor (1,0)
-
+    print_num(angulo);
     if(z >= posAtual->z){
         viraPara(0);
+        get_current_GPS_position(posAtual);
+        vetX = (x - posAtual->x);
+        vetZ = (z - posAtual->z);
+        modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
+        cosseno = (vetX/(modulo));
+        if(cosseno < 0){
+            angulo = 180 - arccosseno100(cosseno);
+        }else{
+            angulo = arccosseno100(cosseno);
+        }
+        print_num(angulo);
         if(x > posAtual->x){
             vira(angulo);
         }else{
             vira(-angulo);
         }
-    }
+    }else
     if(z < posAtual->z){
         viraPara(180);
+        get_current_GPS_position(posAtual);
+        vetX = (x - posAtual->x);
+        vetZ = (z - posAtual->z);
+        modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
+        cosseno = (vetX/(modulo));
+        if(cosseno < 0){
+            angulo = 180 - arccosseno100(cosseno);
+        }else{
+            angulo = arccosseno100(cosseno);
+        }
         if(x < posAtual->x){
             vira(angulo);
         }else{
@@ -177,11 +232,13 @@ int main(){
 	// proximoDest = maisPerto(tamanho, visitados, num_visitados);
 	// print_num(proximoDest);
 	int i = 0;
-    // vira(180);
-	// print_num(friends_locations[i].x);
-	// print_num(friends_locations[i].y);
-	// print_num(-friends_locations[i].z);
 	alinha(friends_locations[i].x, friends_locations[i].z);
+
+
+
+
+
+
 	// for(int i=0; i<tamanho; i++){
 	// 	proximoDest = maisPerto(tamanho, visitados, num_visitados);
 	// 	alinha(friends_locations[proximoDest].x, friends_locations[proximoDest].z);
