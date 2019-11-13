@@ -1,4 +1,4 @@
-#include "api_robot2.h"
+#include "api_robot.h"
 //#define MINDIFF 2.2250738585072014e-308   // smallest positive double
 #define MINDIFF 2.25e-308                   // use for convergence check
 
@@ -59,6 +59,7 @@ int inimigoProx(){
     }
     return 0;
 }
+
 void vira(int grau){
 	Vector3 *atual;
 	Vector3 *guarda;
@@ -89,6 +90,7 @@ void vira(int grau){
 	return;
 
 }
+
 void viraPara(int grau){
 	Vector3 *atual;
 	get_gyro_angles(atual);
