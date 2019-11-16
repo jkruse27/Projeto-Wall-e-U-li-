@@ -1,7 +1,7 @@
 #include "api_robot.h"
 //#define MINDIFF 2.2250738585072014e-308   // smallest positive double
 #define MINDIFF 2.25e-308                   // use for convergence check
-#define SPEED 20
+#define SPEED 15
 
 int abs(int a);
 void move(int d);
