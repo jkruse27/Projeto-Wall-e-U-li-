@@ -1,7 +1,7 @@
 #include "api_robot.h"
 //#define MINDIFF 2.2250738585072014e-308   // smallest positive double
 #define MINDIFF 2.25e-308                   // use for convergence check
-#define SPEED 20
+#define SPEED 15
 
 int abs(int a);
 void move(int d);
@@ -14,58 +14,19 @@ void alinha(int x, int z);
 int amigoProx();
 int inimigoProx();
 void montanha();
-int object_in_front(int i);
 
-
-int is_friend_near(int f_num){
-	int x = friends_locations[f_num].x;
-	int z = friends_locations[f_num].z;
-	Vector3 k;
-	get_current_GPS_position(&k);
-	int d = ((x-k.x)*(x-k.x))+((z-k.z)*(z-k.z));
-	if(d < 25)
-		puts("ola companheiro\n");
-	return d < 25;
-}
 
 int abs(int a){
 	return a < 0 ? -a : a;
 }
 
-int object_in_front(int i){
-	int ret = 0;
-	short a = get_us_distance();
-	if(a < 600 && a != -1){
-		Vector3 k;
-		int x = friends_locations[i].x;
-		int z = friends_locations[i].z;
-		get_current_GPS_position(&k);
-		int d = ((x-k.x)*(x-k.x))+((z-k.z)*(z-k.z));
-		if(d != (a*a)){
-			set_torque(-SPEED, -SPEED);
-			ret = 1;
-			puts("fodeu\n");
-			set_torque(0, 0);
-		}
-	}
-	return ret; 
-}
-
 void move(int d){
 	Vector3 v;
 	Vector3 a;
-	int l;
-	l = get_time();
 	get_current_GPS_position(&v);
-	set_torque(10, 10);
-	get_current_GPS_position(&a);
-	while((((a.z-v.z)*(a.z-v.z)) + ((a.x-v.x)*(a.x-v.x))) < (d*d)){
-		get_current_GPS_position(&a);
-		if(get_time() - l > 3000)
-			break;
-	}
-	set_torque(0,0);
-	return; 
+	set_torque(15, 15);
+	while(raiz_quadrada(((a.z-v.z)*(a.z-v.z)) + ((a.x-v.x)*(a.x-v.x))) < d);
+	return;
 }
 
 float raiz_quadrada(float square){
@@ -94,6 +55,22 @@ int arccosseno100(float cosseno){
     return arccos;
 }
 
+int amigoProx(){
+    int tamanho = sizeof(friends_locations) / sizeof(friends_locations[0]);
+    Vector3 posAtual;
+    int vetX, vetZ, dist;
+    for (int i = 0; i < tamanho; i++){
+        get_current_GPS_position(&posAtual);
+        vetX = (friends_locations[i].x - posAtual.x);
+        vetZ = (friends_locations[i].z - posAtual.z);
+        dist = raiz_quadrada((vetX*vetX) + (vetZ*vetZ));
+        if(dist <= 5){
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int inimigoProx(){
     int tamanho = sizeof(dangerous_locations) / sizeof(dangerous_locations[0]);
     Vector3 posAtual;
@@ -113,27 +90,20 @@ int inimigoProx(){
 void vira(int grau){
 	Vector3 atual;
 	Vector3 guarda;
-	int speed = SPEED;
 	get_gyro_angles(&guarda);
-	int dest = (guarda.y+grau)%360;
-	
-	if(dest<0)
+	float dest = (guarda.y+grau)%360;
+	if(dest<0){
 		dest = 360 + dest;
-	
-	get_gyro_angles(&atual);
-	if(abs(dest - atual.y) < 180){
-		if(dest < atual.y)
-			speed = -speed;
-		set_torque(speed, -speed);
+	}
+    	get_gyro_angles(&atual);
+	if(atual.y < dest){
 		while(atual.y != dest){
-			get_gyro_angles(&atual);
-		}
-		
+				set_torque(15, -15);
+				get_gyro_angles(&atual);
+			}
 	}else{
-		if(dest < atual.y)
-			speed = -speed;
-		set_torque(-speed, speed);
-		while(atual.y != dest){
+		while(atual.y != dest){	
+			set_torque(-15, 15);
 			get_gyro_angles(&atual);
 		}
 	}
@@ -146,18 +116,18 @@ void viraPara(int grau){
 	int speed = SPEED;
 	get_gyro_angles(&atual);
 	if(abs(grau - atual.y) < 180){
-		if(grau < atual.y)
+		if(grau - atual.y < 0)
 			speed = -speed;
-		set_torque(speed, -speed);
 		while(atual.y != grau){
+			set_torque(speed, -speed);
 			get_gyro_angles(&atual);
 		}
 		
 	}else{
-		if(grau < atual.y)
+		if(grau - atual.y < 0)
 			speed = -speed;
-		set_torque(-speed, speed);
 		while(atual.y != grau){
+			set_torque(-speed, speed);
 			get_gyro_angles(&atual);
 		}
 	}
@@ -199,7 +169,7 @@ void alinha(int x, int z){
 	int vetX = (x - posAtual.x);
 	int vetZ = (z - posAtual.z);
 	float modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
-	float cosseno = (vetZ/(modulo));
+	float cosseno = (vetX/(modulo));
 	int angulo;
 	Vector3 ang;
 	get_gyro_angles(&ang);
@@ -208,10 +178,12 @@ void alinha(int x, int z){
 	}else{
 		angulo = arccosseno100(cosseno);
 	}
-	if(vetX < 0){
+    
+	if(vetZ < 0){
 		angulo = 360 - angulo;
 	}
-	viraPara(angulo);
+	angulo = ang.y - angulo;
+	vira(angulo);
 
 	return;
 }
@@ -237,38 +209,11 @@ void montanha(){
 	return;
 }
 
+
 int main(){
 	int tamanho = sizeof(friends_locations) / sizeof(friends_locations[0]);
-	Vector3 l;
-	Vector3 k;
-	for(int i = 0; i < tamanho; i++){	
-		while(1){
-			get_current_GPS_position(&l);
-			alinha(friends_locations[i].x, friends_locations[i].z);
-			if(object_in_front(i)){
-				vira(-90);
-				if(is_friend_near(i))
-					break;
-			}
-			if(object_in_front(i)){
-				vira(90);
-				vira(90);
-				if(is_friend_near(i))
-					break;
-			}
-			move(2);
-			if(is_friend_near(i))
-				break;
-			get_current_GPS_position(&k);
-			if(k.x == l.x && k.z == l.z){
-				vira(180);
-				move(2);
-				puts("que merda\n");
-			}
-		}
-	}
-	
-	puts("Acabou Porra\n");
+	move(5);
+	print_num(1);
 	while(1);
 	return 0;
 }
