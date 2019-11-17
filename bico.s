@@ -8,20 +8,10 @@
 .globl set_engine_torque
 .globl set_torque
 
-
-.globl print_num
-
-
 set_time:
 	li a7, 22
 	ecall
 	ret	
-
-print_num:
-	mv a2, a0
-	li a7, 45
-	ecall
-	ret
 
 puts:
 	# Encontra o tamanho da string

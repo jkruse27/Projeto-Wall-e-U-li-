@@ -60,8 +60,6 @@ int_handler:
 	beq a7, t1, settime
 	li t1, 64
 	beq a7, t1, write
-	li t1, 45
-	beq a7, t1, print_num
 	j return
 	# ---------------- Tratamento da Interrupcao ------------------ #
 
@@ -225,86 +223,6 @@ int_handler:
 		la t1, tempo
 		sw a0, 0(t1)
 		j return_plus
-
-	print_num:
-		li t0, 10
-		mv t2, a2
-		div a2, a2, t0
-		div a2, a2, t0
-		div a2, a2, t0
-		rem t1, a2, t0
-		mv a2, t2
-		addi t1, t1, 48
-		li t2, UART_VS
-		sb t1, 0(t2)
-		li t1, UART_S
-		li t2, 1
-		sb t2, 0(t1)
-		# Loop esperando que se possa escrever outra letra
-		lloop1:
-			lbu t2, 0(t1)
-			bnez t2, lloop1
-
-		mv t2, a2
-		div a2, a2, t0
-		div a2, a2, t0
-		rem t1, a2, t0
-		mv a2, t2
-		addi t1, t1, 48
-		li t2, UART_VS
-		sb t1, 0(t2)
-		li t1, UART_S
-		li t2, 1
-		sb t2, 0(t1)
-		# Loop esperando que se possa escrever outra letra
-		lloop2:
-			lbu t2, 0(t1)
-			bnez t2, lloop2
-
-		mv t2, a2
-		div a2, a2, t0
-		rem t1, a2, t0
-		mv a2, t2
-		addi t1, t1, 48
-		li t2, UART_VS
-		sb t1, 0(t2)
-		li t1, UART_S
-		li t2, 1
-		sb t2, 0(t1)
-		# Loop esperando que se possa escrever outra letra
-		lloop3:
-			lbu t2, 0(t1)
-			bnez t2, lloop3
-
-		mv t2, a2
-		rem t1, a2, t0
-		mv a2, t2
-		addi t1, t1, 48
-		li t2, UART_VS
-		sb t1, 0(t2)
-		li t1, UART_S
-		li t2, 1
-		sb t2, 0(t1)
-		# Loop esperando que se possa escrever outra letra
-		lloop4:
-			lbu t2, 0(t1)
-			bnez t2, lloop4
-
-		li t1, 10
-		li t2, UART_VS
-		sb t1, 0(t2)
-		li t1, UART_S
-		li t2, 1
-		sb t2, 0(t1)
-		# Loop esperando que se possa escrever outra letra
-		lloop5:
-			lbu t2, 0(t1)
-			bnez t2, lloop5
-		j return_plus
-
-
-
-
 
 	write:
 		csrrw a0, mscratch, a0
