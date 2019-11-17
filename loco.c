@@ -2,8 +2,8 @@
 //#define MINDIFF 2.2250738585072014e-308   // smallest positive double
 #define MINDIFF 2.25e-308                   // use for convergence check
 #define SPEED 15
+#define abs(x)  x < 0 ? -x : x
 
-int abs(int a);
 void move(int d);
 void viraPara(int grau);
 int maisPerto(int tamanho, int *visitados, int num_visitados);
@@ -13,10 +13,49 @@ int arccosseno100(float cosseno);
 void alinha(int x, int z);
 int amigoProx();
 int inimigoProx();
-void montanha();
-int object_in_front(int i);
+int montanha();
+int object_in_front();
 
 
+//Alinha o robo a 90 graus com o inimigo proximo
+void avoidEnemy(int pos){
+	puts("comunistas\n");
+	int x = dangerous_locations[pos].x;
+	int z = dangerous_locations[pos].z;
+	Vector3 posAtual;
+	get_current_GPS_position(&posAtual);
+	int vetX = (x - posAtual.x);
+	int vetZ = (z - posAtual.z);
+
+	//Encontra o angulo absoluto do amigo em relacao a onde estamos
+	float modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
+	float cosseno = (vetZ/(modulo));
+	int angulo;
+	Vector3 ang;
+	get_gyro_angles(&ang);
+	if(cosseno < 0){
+		angulo = 180 - arccosseno100((-cosseno));
+	}else{
+		angulo = arccosseno100(cosseno);
+	}
+	if(vetX < 0){
+		angulo = 360 - angulo;
+	}
+	
+	if(angulo > 90 && angulo < 270){
+		angulo = (angulo+85)%360;	
+	}else{
+		angulo = (angulo-85)%360;	
+	}
+	if(angulo < 0)
+		angulo = 360 + angulo;
+	if(abs((ang.y-angulo)) > 90)
+		return;
+	viraPara(angulo);
+}
+
+
+//Verifica se o amigo que estamos buscando esta a menos de 5dm
 int is_friend_near(int f_num){
 	int x = friends_locations[f_num].x;
 	int z = friends_locations[f_num].z;
@@ -28,29 +67,24 @@ int is_friend_near(int f_num){
 	return d < 25;
 }
 
-int abs(int a){
-	return a < 0 ? -a : a;
-}
-
-int object_in_front(int i){
+//Verifica se ha algum objeto na frente
+int object_in_front(){
 	int ret = 0;
 	short a = get_us_distance();
+
+	//Se estiver vendo algo a menos de 600dm verifica se eh amigo 
 	if(a < 600 && a != -1){
-		Vector3 k;
-		int x = friends_locations[i].x;
-		int z = friends_locations[i].z;
-		get_current_GPS_position(&k);
-		int d = ((x-k.x)*(x-k.x))+((z-k.z)*(z-k.z));
-		if(d != (a*a)){
-			set_torque(-SPEED, -SPEED);
-			ret = 1;
-			puts("fodeu\n");
-			set_torque(0, 0);
-		}
+		set_torque(-SPEED, -SPEED);
+		ret = 1;
+		puts("fodeu\n");
+		set_torque(0, 0);
 	}
+
+	//retorna 1 se tiver obstaculo e 0 caso nao
 	return ret; 
 }
 
+//Anda uma distancia d
 void move(int d){
 	Vector3 v;
 	Vector3 a;
@@ -59,8 +93,13 @@ void move(int d){
 	get_current_GPS_position(&v);
 	set_torque(10, 10);
 	get_current_GPS_position(&a);
+
+	//Anda uma distancia d
 	while((((a.z-v.z)*(a.z-v.z)) + ((a.x-v.x)*(a.x-v.x))) < (d*d)){
 		get_current_GPS_position(&a);
+		if(object_in_front())
+			break;	
+		//Se demora mais de 3 segundos sai, pois deve ter ficado preso
 		if(get_time() - l > 3000)
 			break;
 	}
@@ -68,6 +107,7 @@ void move(int d){
 	return; 
 }
 
+//Calcula a raiz de um numero
 float raiz_quadrada(float square){
     float root=square/3, last, diff=1;
     if (square <= 0) return 0;
@@ -79,8 +119,11 @@ float raiz_quadrada(float square){
     return root;
 }
 
+//Calcula o arccosseno de um cosseno, retornando um valor entre  0 e 90 graus
 int arccosseno100(float cosseno){
     cosseno = cosseno * 100;
+
+    //Aproximacao de arcocosseno por retas
     int arccos = 0;
     if(cosseno < 60){
         arccos = -0.6*cosseno + 90;
@@ -94,6 +137,8 @@ int arccosseno100(float cosseno){
     return arccos;
 }
 
+//Verifica se ha um inimigo proximo
+//Se tiver retorna o seu numero, caso nao retorna 0
 int inimigoProx(){
     int tamanho = sizeof(dangerous_locations) / sizeof(dangerous_locations[0]);
     Vector3 posAtual;
@@ -103,29 +148,33 @@ int inimigoProx(){
         vetX = (dangerous_locations[i].x - posAtual.x);
         vetZ = (dangerous_locations[i].z - posAtual.z);
         dist = raiz_quadrada((vetX*vetX) + (vetZ*vetZ));
-        if(dist <= 12){
-            return 1;
+        if(dist <= 15){
+            return i+1;
         }
     }
     return 0;
 }
 
+//Gira um angulo relativo ao angulo atual do robo
 void vira(int grau){
 	Vector3 atual;
 	Vector3 guarda;
 	int speed = SPEED;
+	
+	//Encontra o angulo absoluto
 	get_gyro_angles(&guarda);
 	int dest = (guarda.y+grau)%360;
 	
 	if(dest<0)
 		dest = 360 + dest;
 	
+	//Gira pelo lado com menor angulo
 	get_gyro_angles(&atual);
 	if(abs(dest - atual.y) < 180){
 		if(dest < atual.y)
 			speed = -speed;
 		set_torque(speed, -speed);
-		while(atual.y != dest){
+		while(abs((atual.y - dest)) > 2){
 			get_gyro_angles(&atual);
 		}
 		
@@ -133,7 +182,7 @@ void vira(int grau){
 		if(dest < atual.y)
 			speed = -speed;
 		set_torque(-speed, speed);
-		while(atual.y != dest){
+		while(abs((atual.y-dest)) > 2){
 			get_gyro_angles(&atual);
 		}
 	}
@@ -141,15 +190,17 @@ void vira(int grau){
 	return;
 }
 
+//Gira um angulo absoluto
 void viraPara(int grau){
 	Vector3 atual;
 	int speed = SPEED;
 	get_gyro_angles(&atual);
-	if(abs(grau - atual.y) < 180){
+	//Gira pelo lado com menor angulo
+	if(abs((grau - atual.y)) < 180){
 		if(grau < atual.y)
 			speed = -speed;
 		set_torque(speed, -speed);
-		while(atual.y != grau){
+		while(abs((atual.y - grau)) > 2){
 			get_gyro_angles(&atual);
 		}
 		
@@ -157,7 +208,7 @@ void viraPara(int grau){
 		if(grau < atual.y)
 			speed = -speed;
 		set_torque(-speed, speed);
-		while(atual.y != grau){
+		while(abs((atual.y - grau)) > 2){
 			get_gyro_angles(&atual);
 		}
 	}
@@ -165,7 +216,16 @@ void viraPara(int grau){
 	return;
 }
 
-
+int montanha(){
+	Vector3 a;
+	get_gyro_angles(&a);
+	int z = a.z;
+	if(z > 180)
+		z = abs((z - 360));
+	if(z > 10)
+		return 1;
+	return 0;
+}
 
 int maisPerto(int tamanho, int *visitados, int num_visitados){
     int novo;
@@ -192,12 +252,14 @@ int maisPerto(int tamanho, int *visitados, int num_visitados){
     return menor_val;
 }
 
-
+//Alinha o robo com o amigo que esta sendo buscado
 void alinha(int x, int z){
 	Vector3 posAtual;
 	get_current_GPS_position(&posAtual);
 	int vetX = (x - posAtual.x);
 	int vetZ = (z - posAtual.z);
+
+	//Encontra o angulo absoluto do amigo em relacao a onde estamos
 	float modulo = raiz_quadrada((vetX*vetX)+(vetZ*vetZ));
 	float cosseno = (vetZ/(modulo));
 	int angulo;
@@ -211,63 +273,63 @@ void alinha(int x, int z){
 	if(vetX < 0){
 		angulo = 360 - angulo;
 	}
+
+	//Vira o angulo encontrado
 	viraPara(angulo);
 
-	return;
-}
-
-
-
-void montanha(){
-	int leitura;
-	leitura = get_us_distance();
-	int direita, esquerda;
-	Vector3 atual;
-	get_gyro_angles(&atual);
-	if(leitura != -1){
-		vira(10);
-		direita = get_us_distance();
-		vira(-20);
-		esquerda = get_us_distance();
-		if(esquerda > direita){
-			vira(20);
-		}
-	}
-	set_torque(20,20);
 	return;
 }
 
 int main(){
 	int tamanho = sizeof(friends_locations) / sizeof(friends_locations[0]);
 	Vector3 l;
-	Vector3 k;
-	for(int i = 0; i < tamanho; i++){	
+	Vector3 k;	
+
+	//Para cada amigo
+	for(int i = 0; i < tamanho; i++){
+		//Enquanto nao tiver chegado no amigo	
 		while(1){
-			get_current_GPS_position(&l);
-			alinha(friends_locations[i].x, friends_locations[i].z);
-			if(object_in_front(i)){
-				vira(-90);
-				if(is_friend_near(i))
-					break;
-			}
-			if(object_in_front(i)){
-				vira(90);
-				vira(90);
-				if(is_friend_near(i))
-					break;
-			}
-			move(2);
+			get_current_GPS_position(&l);	
+			if(!inimigoProx())
+				alinha(friends_locations[i].x, friends_locations[i].z);
 			if(is_friend_near(i))
 				break;
-			get_current_GPS_position(&k);
-			if(k.x == l.x && k.z == l.z){
-				vira(180);
+			if(inimigoProx()){
+				avoidEnemy(inimigoProx() - 1);
+				if(!object_in_front())
+					move(2);
+			}
+			//Se tiver algo na frente vira 90 graus e anda um pouco
+			else if(object_in_front()){
+				if(is_friend_near(i))
+					break;
+				vira(-55);
+				if(is_friend_near(i))
+					break;
+				
+				if(object_in_front())
+					vira(-55);
+				move(5);
+			}else	
+				//Anda um pouco
 				move(2);
+
+			//Se tiver um amigo perto vai pro proximo amigo
+			if(is_friend_near(i))
+				break;
+			
+			get_current_GPS_position(&k);
+			
+			//Se nao tiver se mexido quer dizer que esta preso, vira 180 e and um pouco
+			if(k.x == l.x && k.z == l.z){
 				puts("que merda\n");
+				vira(180);
+				if(!object_in_front(i))
+					move(1);
 			}
 		}
 	}
-	
+
 	puts("Acabou Porra\n");
 	while(1);
 	return 0;
