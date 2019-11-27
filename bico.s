@@ -53,14 +53,26 @@ get_us_distance:
 set_head_servo:
 	li a7, 17
 	ecall
-	ret
+
+	addi t0, x0, -1
+	beq t0, a0, m_u
+	addi t0, t0, -1
+	beq t0, a0, m_d
+	j returnesis
+	m_u:
+		addi a0, a0, -1
+		j returnesis
+	m_d:
+		addi a0, a0, 1
+	returnesis:
+		ret
 
 set_engine_torque:
 	# Verifica se o torque fornecido esta dentro dos valores permitidos
 	li t0, 100
-	bgt a0, t0, not_good
-	li t0, -100
-	blt a0, t0, not_good
+	bgt a1, t0, not_good
+	addi t0, t0,-200
+	blt a1, t0, not_good
 	# Realiza a chamada de sistema
 	li a7, 18
 	ecall
@@ -77,7 +89,7 @@ set_torque:
 	li t0, 100
 	bgt a0, t0, bad_bad
 	bgt a1, t0, bad_bad
-	li t0, -100
+	addi t0, t0, -200
 	blt a0, t0, bad_bad
 	blt a1, t0, bad_bad
 	# Realiza a chamada de sistema
