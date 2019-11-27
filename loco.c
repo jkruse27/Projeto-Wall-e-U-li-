@@ -16,10 +16,17 @@ int inimigoProx();
 int montanha();
 int object_in_front();
 
+int between(int a, int b, int c){
+	if (a < b){
+		return c >= a && b >= c;
+	}else{
+		return (b >= c && c >= 0) || (c >= a && c <= 360);
+	}
+}
+
 
 //Alinha o robo a 90 graus com o inimigo proximo
 void avoidEnemy(int pos){
-	puts("comunistas\n");
 	int x = dangerous_locations[pos].x;
 	int z = dangerous_locations[pos].z;
 	Vector3 posAtual;
@@ -33,25 +40,23 @@ void avoidEnemy(int pos){
 	int angulo;
 	Vector3 ang;
 	get_gyro_angles(&ang);
-	if(cosseno < 0){
+	if(cosseno < 0)
 		angulo = 180 - arccosseno100((-cosseno));
-	}else{
+	else
 		angulo = arccosseno100(cosseno);
-	}
-	if(vetX < 0){
-		angulo = 360 - angulo;
-	}
 	
-	if(angulo > 90 && angulo < 270){
-		angulo = (angulo+85)%360;	
-	}else{
+	if(vetX < 0)
+		angulo = 360 - angulo;
+	
+	// Se alinha tangentemente ao inimigo
+	if(between(ang.y, (ang.y + 180)%360, angulo))
 		angulo = (angulo-85)%360;	
-	}
+	else
+		angulo = (angulo+85)%360;	
 	if(angulo < 0)
 		angulo = 360 + angulo;
-	if(abs((ang.y-angulo)) > 90)
-		return;
-	viraPara(angulo);
+	if(between(ang.y, (ang.y + 90)%360, angulo) || between((ang.y + 270)%360, ang.y, angulo))
+		viraPara(angulo);
 }
 
 
@@ -62,8 +67,6 @@ int is_friend_near(int f_num){
 	Vector3 k;
 	get_current_GPS_position(&k);
 	int d = ((x-k.x)*(x-k.x))+((z-k.z)*(z-k.z));
-	if(d < 25)
-		puts("ola companheiro\n");
 	return d < 25;
 }
 
@@ -76,7 +79,6 @@ int object_in_front(){
 	if(a < 600 && a != -1){
 		set_torque(-SPEED, -SPEED);
 		ret = 1;
-		puts("fodeu\n");
 		set_torque(0, 0);
 	}
 
@@ -295,7 +297,7 @@ int main(){
 			if(is_friend_near(i))
 				break;
 			if(inimigoProx()){
-				avoidEnemy(inimigoProx() - 1);
+		        	avoidEnemy(inimigoProx() - 1);
 				if(!object_in_front())
 					move(2);
 			}
@@ -322,7 +324,6 @@ int main(){
 			
 			//Se nao tiver se mexido quer dizer que esta preso, vira 180 e and um pouco
 			if(k.x == l.x && k.z == l.z){
-				puts("que merda\n");
 				vira(180);
 				if(!object_in_front(i))
 					move(1);
@@ -330,7 +331,6 @@ int main(){
 		}
 	}
 
-	puts("Acabou Porra\n");
 	while(1);
 	return 0;
 }
