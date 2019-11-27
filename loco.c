@@ -16,6 +16,8 @@ int inimigoProx();
 int montanha();
 int object_in_front();
 
+
+// Verifica se o angulo c esta entre a e b (pelo lado positivo)
 int between(int a, int b, int c){
 	if (a < b){
 		return c >= a && b >= c;
@@ -48,6 +50,8 @@ void avoidEnemy(int pos){
 	if(vetX < 0)
 		angulo = 360 - angulo;
 	
+	if(!(between(ang.y, (ang.y + 90)%360, angulo) || between((ang.y + 270)%360, ang.y, angulo)))
+		return;
 	// Se alinha tangentemente ao inimigo
 	if(between(ang.y, (ang.y + 180)%360, angulo))
 		angulo = (angulo-85)%360;	
@@ -55,8 +59,7 @@ void avoidEnemy(int pos){
 		angulo = (angulo+85)%360;	
 	if(angulo < 0)
 		angulo = 360 + angulo;
-	if(between(ang.y, (ang.y + 90)%360, angulo) || between((ang.y + 270)%360, ang.y, angulo))
-		viraPara(angulo);
+	viraPara(angulo);
 }
 
 
